@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 
 max_data_rows = 1000000
-conn = sqlite3.connect('/home/dom/projects/carb/src/db/crypto.db')
+conn = sqlite3.connect('/home/dom/projects/carb/backend/db/crypto.db')
 cursor = conn.cursor()
 
 def get_row_count(table):
