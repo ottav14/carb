@@ -1,7 +1,19 @@
 <script>
 	import { onMount } from 'svelte';
+	import Dropdown from './components/Dropdown.svelte';
 
+	let suggestions = [];
+	let query = '';
 	let ticker;
+	let tickers;
+
+	$: if(query) {
+		query = query.toUpperCase();
+		if(query.length)
+			suggestions = tickers.filter(ticker => ticker.startsWith(query)).slice(0, 5);
+		else
+			suggestions = [];
+	}
 
 	const apiCall = async (url) => {
 		const res = await fetch(url);
@@ -13,6 +25,13 @@
 		for(const point of data)
 			prices.push(point.price);
 		return prices;
+	}
+
+	const getTickers = (data) => {
+		const tickers = [];
+		for(const point of data)
+			tickers.push(point.ticker);
+		return tickers;
 	}
 
 	const line = (x1, y1, x2, y2, ctx) => {
@@ -49,10 +68,17 @@
 		}
 	}
 
+	const setTicker = (t) => {
+		ticker = t;
+		suggestions = [];
+		query = '';
+	}
+
 	onMount(async () => {
-		const tickers = await apiCall('/api/tickers');
-		ticker = tickers[0].ticker;
-		const id = tickers[0].id;
+		const tickerData = await apiCall('/api/tickers');
+		tickers = getTickers(tickerData);
+		ticker = tickers[0];
+		const id = tickerData[0].id;
 
 		const data = await apiCall(`/api/data/${id}`);
 		const prices = getPrices(data);
@@ -69,9 +95,19 @@
 
 <main>
 	<div id="display">
-		{#if ticker}
-			<p id="ticker">{ticker}</p>
-		{/if}
+		<div class="controls">
+			{#if ticker}
+				<p>{ticker}</p>
+			{/if}
+			<input type="text" bind:value={query} placeholder="Enter ticker..." />
+			{#if suggestions.length}
+				<ul class="autocomplete">
+					{#each suggestions as s}
+						<li on:click={() => setTicker(s)} class="suggestion">{s}</li>
+					{/each}
+				</ul>
+			{/if}
+		</div>
 		<canvas />
 	</div>
 </main>
@@ -91,11 +127,37 @@
 		padding: 2rem;
 	}
 
+	.controls {
+		display: flex;
+		flex-direction: column;
+		width: max-content;
+		position: relative;
+	}
+
+	.autocomplete {
+		position: absolute;
+		width: 100%;
+		padding: 0;
+		top: 100%;
+		list-style: none;
+		background-color: #000;
+	}
+
+	.suggestion {
+		padding: 0.5rem;
+	}
+
+	.suggestion:hover {
+		background-color: #1f1f1f;
+	}
+
 	#ticker {
 		padding: 1rem;
 	}
 
 	#display {
+		display: flex;
+		flex-direction: column;
 		border: 1px solid #1f1f1f;		
 	}
 </style>
