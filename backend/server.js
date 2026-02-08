@@ -23,6 +23,12 @@ app.get("/api/data/:id", (req, res) => {
 	res.json(data);
 });
 
+app.get("/api/id/:ticker", (req, res) => {
+	const ticker = req.params.ticker;
+	const data = db.prepare(`SELECT * FROM tickers WHERE ticker = '${ticker}'`).all();
+	res.json(data);
+});
+
 app.listen(PORT, () => {
 	console.log(`Express running on http://localhost:${PORT}`);
 });

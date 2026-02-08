@@ -20,6 +20,11 @@
 		return res.json();
 	}
 
+	const getTickerID = async (ticker) => {
+		const data = await apiCall(`/api/id/${ticker}`);
+		return data[0].id;
+	}
+
 	const getPrices = (data) => {
 		const prices = [];
 		for(const point of data)
@@ -59,6 +64,7 @@
 		const low = getLow(prices);
 		const high = getHigh(prices);
 		ctx.strokeStyle = '#ededed';
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		for(let i=0; i<n; i++) {
 			const x1 = i * canvas.width / n;
 			const x2 = (i+1) * canvas.width / n;
@@ -68,13 +74,21 @@
 		}
 	}
 
-	const setTicker = (t) => {
+	const setTicker = async (t) => {
 		ticker = t;
 		suggestions = [];
 		query = '';
+
+		const id = await getTickerID(ticker);
+		const data = await apiCall(`/api/data/${id}`);
+		const prices = getPrices(data);
+		const canvas = document.querySelector('canvas');
+		drawGraph(prices, canvas);
 	}
 
 	onMount(async () => {
+
+
 		const tickerData = await apiCall('/api/tickers');
 		tickers = getTickers(tickerData);
 		ticker = tickers[0];
