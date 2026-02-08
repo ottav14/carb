@@ -2,17 +2,16 @@
 	import { onMount } from 'svelte';
 
 	let suggestions = [];
-	let query = '';
-	let ticker;
+	let query = 'BTC-USD';
 	let tickers;
+	let tickerInput;
 	let canvas;
+	let autocomplete = false;
 
-	$: if(query) {
+	$: if(query && tickers) {
 		query = query.toUpperCase();
 		if(query.length)
 			suggestions = tickers.filter(ticker => ticker.startsWith(query)).slice(0, 5);
-		else
-			suggestions = [];
 	}
 
 	const line = (x1, y1, x2, y2, ctx) => {
@@ -50,6 +49,16 @@
 		}
 	}
 
+	const inputFocus = () => {
+		autocomplete = true;
+		tickerInput.select();
+	}
+
+	const inputBlur = () => {
+		autocomplete = false;
+		console.log('poop');
+	}
+
 	const getPrices = (data) => {
 		const prices = [];
 		for(const point of data)
@@ -67,10 +76,9 @@
 		return data[0].id;
 	}
 
-	const setTicker = async (t) => {
-		ticker = t;
-		suggestions = [];
-		query = '';
+	const setTicker = async (ticker) => {
+		query = ticker;
+		autocomplete = false;
 
 		const id = await getTickerID(ticker);
 		const data = await apiCall(`/api/data/${id}`);
@@ -88,7 +96,6 @@
 	onMount(async () => {
 		const tickerData = await apiCall('/api/tickers');
 		tickers = getTickers(tickerData);
-		ticker = tickers[0];
 		const id = tickerData[0].id;
 
 		const data = await apiCall(`/api/data/${id}`);
@@ -103,14 +110,16 @@
 
 <main>
 	<div class="controls">
-		{#if ticker}
-			<p id="ticker">{ticker}</p>
-		{/if}
-		<input type="text" bind:value={query} placeholder="Enter ticker..." />
-		{#if suggestions.length}
+		<input on:focus={inputFocus}
+			   type="text" 
+		 	   bind:value={query} 
+			   bind:this={tickerInput}
+			   placeholder="Enter ticker..." 
+		/>
+		{#if autocomplete}
 			<ul class="autocomplete">
 				{#each suggestions as s}
-					<li on:click={() => setTicker(s)} class="suggestion">{s}</li>
+					<li on:mousedown={() => setTicker(s)} class="suggestion">{s}</li>
 				{/each}
 			</ul>
 		{/if}
@@ -131,7 +140,25 @@
 	input {
 		height: 2rem;
 		font-size: 24pt;
+		border-radius: 0;
+		border: 1px solid #1f1f1f;
+		background-color: #000;
+		color: #ededed;
+		padding: 1rem;
+		width: 15rem;
 	}
+
+	input:focus {
+		outline: none;
+		box-shadow: none;
+		border: 1px solid #ededed;
+	}
+
+	input::selection {
+		background: #ededed;
+		color: #000;
+	}
+
 
 	canvas {
 		padding: 2rem;
