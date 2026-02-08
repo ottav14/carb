@@ -34,6 +34,14 @@
 		background-color: #777;
 		transform: scale(0.95);
 	}
+
+	button:focus-visible {
+		outline: none;
+		box-shadow: none;
+		background-color: #ededed;
+		color: #000;
+	}
+
 </style>
 
 

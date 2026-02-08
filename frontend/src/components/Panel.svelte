@@ -59,6 +59,23 @@
 		console.log('poop');
 	}
 
+	const inputKeydown = (e) => {
+		switch(e.key) {
+			case 'Escape':
+				tickerInput.blur();
+				autocomplete = false;
+				break;
+		}
+	}
+
+	const buttonKeydown = (e, s) => {
+		switch(e.key) {
+			case 'Enter':
+				setTicker(s);
+				break;
+		}
+	}
+
 	const getPrices = (data) => {
 		const prices = [];
 		for(const point of data)
@@ -111,6 +128,7 @@
 <main>
 	<div class="controls">
 		<input on:focus={inputFocus}
+		       on:keydown={(e) => inputKeydown(e)}
 			   type="text" 
 		 	   bind:value={query} 
 			   bind:this={tickerInput}
@@ -119,7 +137,11 @@
 		{#if autocomplete}
 			<ul class="autocomplete">
 				{#each suggestions as s}
-					<li on:mousedown={() => setTicker(s)} class="suggestion">{s}</li>
+					<button on:mousedown={() => setTicker(s)} on:keydown={(e) => buttonKeydown(e, s)}>
+						<li class="suggestion">
+							{s}
+						</li>
+					</button>
 				{/each}
 			</ul>
 		{/if}
@@ -170,19 +192,37 @@
 		width: max-content;
 		position: relative;
 		padding: 1rem;
+		padding-bottom: 0;
 	}
 
 	.autocomplete {
 		position: absolute;
-		width: 100%;
-		padding: 0;
+		display: flex;
+		flex-direction: column;
 		top: 100%;
 		list-style: none;
 		background-color: #000;
+		padding: 0;
+	}
+
+	button {
+		background-color: #000;
+		color: #ededed;
+		width: 100%;
+		padding: 0;
+		font-size: 24pt;
+	}
+
+	button:focus-visible {
+		outline: none;
+		box-shadow: none;
+		background-color: #ededed;
+		color: #000;
 	}
 
 	.suggestion {
-		padding: 0.5rem;
+		width: 15rem;
+		padding: 1rem;
 	}
 
 	.suggestion:hover {
