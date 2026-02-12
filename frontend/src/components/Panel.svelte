@@ -7,6 +7,8 @@
 	let tickerInput;
 	let canvas;
 	let autocomplete = false;
+	let volume;
+	let marketCap;
 
 	$: if(query && tickers) {
 		query = query.toUpperCase();
@@ -88,18 +90,14 @@
 		return res.json();
 	}
 
-	const getTickerID = async (ticker) => {
-		const data = await apiCall(`/api/id/${ticker}`);
-		return data[0].id;
-	}
-
 	const setTicker = async (ticker) => {
 		query = ticker;
 		autocomplete = false;
 
-		const id = await getTickerID(ticker);
-		const data = await apiCall(`/api/data/${id}`);
+		const data = await apiCall(`/api/data/ticker/${ticker}/coinbase`);
 		const prices = getPrices(data);
+		volume = data.slice(-1)[0].volume.toFixed(2);
+		console.log(data.slice(-1)[0]);
 		drawGraph(prices, canvas);
 	}
 
@@ -111,50 +109,46 @@
 	}
 
 	onMount(async () => {
-		const tickerData = await apiCall('/api/tickers');
+		const tickerData = await apiCall('/api/tickers/coinbase');
 		tickers = getTickers(tickerData);
-		const id = tickerData[0].id;
-
-		const data = await apiCall(`/api/data/${id}`);
-		const prices = getPrices(data);
-
-		const ctx = canvas.getContext('2d');
-
-		drawGraph(prices, canvas);
+		setTicker(tickers[0]);
 	});
 
 </script>
 
 <main>
-	<div class="controls">
-		<input on:focus={inputFocus}
-		       on:keydown={(e) => inputKeydown(e)}
-			   type="text" 
-		 	   bind:value={query} 
-			   bind:this={tickerInput}
-			   placeholder="Enter ticker..." 
-		/>
-		{#if autocomplete}
-			<ul class="autocomplete">
-				{#each suggestions as s}
-					<button on:mousedown={() => setTicker(s)} on:keydown={(e) => buttonKeydown(e, s)}>
-						<li class="suggestion">
-							{s}
-						</li>
-					</button>
-				{/each}
-			</ul>
-		{/if}
+	<div id="leftContainer">
+		<div class="controls">
+			<input on:focus={inputFocus}
+				   on:keydown={(e) => inputKeydown(e)}
+				   type="text" 
+				   bind:value={query} 
+				   bind:this={tickerInput}
+				   placeholder="Enter ticker..." 
+			/>
+			{#if autocomplete}
+				<ul class="autocomplete">
+					{#each suggestions as s}
+						<button on:mousedown={() => setTicker(s)} on:keydown={(e) => buttonKeydown(e, s)}>
+							<li class="suggestion">
+								{s}
+							</li>
+						</button>
+					{/each}
+				</ul>
+			{/if}
+		</div>
+		<canvas bind:this={canvas} />
 	</div>
-	<canvas bind:this={canvas} />
+	<div id="stats">
+		<p>Volume: {volume}</p>
+	</div>
 </main>
 
 <style>
 	main {
 		display: flex;
-		flex-direction: column;
 		border: 1px solid #1f1f1f;		
-		width: 50rem;
 		margin-right: 2rem;
 		font-size: 24pt;
 	}
@@ -183,6 +177,7 @@
 
 
 	canvas {
+		width: 50rem;
 		padding: 2rem;
 	}
 
@@ -231,5 +226,18 @@
 
 	#ticker {
 		padding: 1rem;
+	}
+
+	#stats {
+		display: flex;
+		justify-content: center;
+		width: 15rem;
+		border-left: 1px solid #1f1f1f;
+		font-size: 20pt;
+		padding: 1rem;
+	}
+
+	#leftContainer {
+		flex-grow: 1;
 	}
 </style>
