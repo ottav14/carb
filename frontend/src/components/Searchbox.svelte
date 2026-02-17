@@ -76,6 +76,9 @@ const inputChange = (e) => {
 		list-style: none;
 		background-color: #000;
 		padding: 0;
+		border-right: 1px solid #1f1f1f;
+		border-left: 1px solid #1f1f1f;
+		border-bottom: 1px solid #1f1f1f;
 	}
 
 	.suggestion {
@@ -93,6 +96,7 @@ const inputChange = (e) => {
 		width: 100%;
 		padding: 0;
 		font-size: 24pt;
+		border: none;
 	}
 
 	button:focus-visible {
