@@ -1,8 +1,11 @@
 <script>
 	import { onMount } from 'svelte';
+	import Dropdown from './Dropdown.svelte';
+	import Searchbox from './Searchbox.svelte';
+
+	const dropdownItems = [ 'a', 'b', 'c' ];
 
 	let suggestions = [];
-	let query = 'BTC-USD';
 	let tickers;
 	let tickerInput;
 	let canvas;
@@ -10,9 +13,9 @@
 	let volume;
 	let marketCap;
 
-	$: if(query && tickers) {
-		query = query.toUpperCase();
-		if(query.length)
+	const handleInput = (e) => {
+		const query = e.detail.target.value.toUpperCase();
+		if(tickers && query.length)
 			suggestions = tickers.filter(ticker => ticker.startsWith(query)).slice(0, 5);
 	}
 
@@ -51,33 +54,6 @@
 		}
 	}
 
-	const inputFocus = () => {
-		autocomplete = true;
-		tickerInput.select();
-	}
-
-	const inputBlur = () => {
-		autocomplete = false;
-		console.log('poop');
-	}
-
-	const inputKeydown = (e) => {
-		switch(e.key) {
-			case 'Escape':
-				tickerInput.blur();
-				autocomplete = false;
-				break;
-		}
-	}
-
-	const buttonKeydown = (e, s) => {
-		switch(e.key) {
-			case 'Enter':
-				setTicker(s);
-				break;
-		}
-	}
-
 	const getPrices = (data) => {
 		const prices = [];
 		for(const point of data)
@@ -91,13 +67,11 @@
 	}
 
 	const setTicker = async (ticker) => {
-		query = ticker;
 		autocomplete = false;
 
 		const data = await apiCall(`/api/data/ticker/${ticker}/coinbase`);
 		const prices = getPrices(data);
 		volume = data.slice(-1)[0].volume.toFixed(2);
-		console.log(data.slice(-1)[0]);
 		drawGraph(prices, canvas);
 	}
 
@@ -119,24 +93,13 @@
 <main>
 	<div id="leftContainer">
 		<div class="controls">
-			<input on:focus={inputFocus}
-				   on:keydown={(e) => inputKeydown(e)}
-				   type="text" 
-				   bind:value={query} 
-				   bind:this={tickerInput}
-				   placeholder="Enter ticker..." 
+			<Dropdown value="test" items={dropdownItems} />
+			<Searchbox 
+				placeholder="Enter a ticker..." 
+				suggestions={suggestions} 
+				on:input={(e) => handleInput(e)}
+				on:mousedown={(e) => setTicker(e.detail.target.innerText)}
 			/>
-			{#if autocomplete}
-				<ul class="autocomplete">
-					{#each suggestions as s}
-						<button on:mousedown={() => setTicker(s)} on:keydown={(e) => buttonKeydown(e, s)}>
-							<li class="suggestion">
-								{s}
-							</li>
-						</button>
-					{/each}
-				</ul>
-			{/if}
 		</div>
 		<canvas bind:this={canvas} />
 	</div>
@@ -153,29 +116,6 @@
 		font-size: 24pt;
 	}
 
-	input {
-		height: 2rem;
-		font-size: 24pt;
-		border-radius: 0;
-		border: 1px solid #1f1f1f;
-		background-color: #000;
-		color: #ededed;
-		padding: 1rem;
-		width: 15rem;
-	}
-
-	input:focus {
-		outline: none;
-		box-shadow: none;
-		border: 1px solid #ededed;
-	}
-
-	input::selection {
-		background: #ededed;
-		color: #000;
-	}
-
-
 	canvas {
 		width: 50rem;
 		padding: 2rem;
@@ -183,46 +123,12 @@
 
 	.controls {
 		display: flex;
-		flex-direction: column;
 		width: max-content;
 		position: relative;
 		padding: 1rem;
 		padding-bottom: 0;
 	}
 
-	.autocomplete {
-		position: absolute;
-		display: flex;
-		flex-direction: column;
-		top: 100%;
-		list-style: none;
-		background-color: #000;
-		padding: 0;
-	}
-
-	button {
-		background-color: #000;
-		color: #ededed;
-		width: 100%;
-		padding: 0;
-		font-size: 24pt;
-	}
-
-	button:focus-visible {
-		outline: none;
-		box-shadow: none;
-		background-color: #ededed;
-		color: #000;
-	}
-
-	.suggestion {
-		width: 15rem;
-		padding: 1rem;
-	}
-
-	.suggestion:hover {
-		background-color: #1f1f1f;
-	}
 
 	#ticker {
 		padding: 1rem;
